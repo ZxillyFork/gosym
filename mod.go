@@ -37,7 +37,12 @@ func (f *Func) PCDataSize() map[string]int {
 	ret := make(map[string]int)
 	for i := 0; i < f.NumPCData; i++ {
 		name := fmt.Sprintf("pcdata-%d%s", i, pcdataSuffix(i))
-		ret[name] = f.tableSizePCData(i) + /* offset pointer */ 4
+		size := f.tableSizePCData(i) + /* offset pointer */ 4
+		if _, ok := ret[name]; ok {
+			ret[name] += size
+		} else {
+			ret[name] = size
+		}
 	}
 	return ret
 }
