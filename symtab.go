@@ -137,6 +137,15 @@ type Func struct {
 	FrameSize int
 	LineTable *LineTable
 	Obj       *Obj
+
+	// from shotizam
+	OffPCSP     uint32 // pcsp table (offset from pcvalue table)
+	OffPCFile   uint32 // pcfile table (offset from pcvalue table)
+	OffPCLn     uint32 // pcln table (offset from pcvalue table)
+	NumPCData   int    // number of entries in pcdata list
+	NumFuncData int    // number of entries in funcdata list
+
+	funcDataBytes []byte
 }
 
 // An Obj represents a collection of functions in a symbol table.
