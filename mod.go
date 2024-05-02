@@ -21,6 +21,10 @@ func (f *Func) FixedHeaderSize() int {
 	return int(f.LineTable.ptrsize + 8* /* uint32 size */ 4)
 }
 
+func (f *Func) FuncDataSize() int {
+	return f.NumFuncData * int(f.LineTable.ptrsize)
+}
+
 func pcdataSuffix(n int) string {
 	switch n {
 	case 0:
