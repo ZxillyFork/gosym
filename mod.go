@@ -42,6 +42,10 @@ func (f *Func) PCDataSize() map[string]int {
 	return ret
 }
 
+func (f *Func) FuncNameSize() int {
+	return len(f.Name) + /* len("\x00") */ 1
+}
+
 // tab is 0-based table number.
 func (f *Func) tableSizePCData(tab int) int {
 	if tab >= f.NumPCData || tab < 0 {
@@ -57,13 +61,13 @@ func (f *Func) tableSizePCData(tab int) int {
 
 func (f *Func) tableSize(off uint32) int {
 	sumSize := 0
-	f.ForeachTableEntry(off, func(val int64, valBytes int, pc uint64, pcBytes int) {
+	f.foreachTableEntry(off, func(val int64, valBytes int, pc uint64, pcBytes int) {
 		sumSize += valBytes + pcBytes
 	})
 	return sumSize
 }
 
-func (f *Func) ForeachTableEntry(off uint32, fn func(val int64, valBytes int, pc uint64, pcBytes int)) {
+func (f *Func) foreachTableEntry(off uint32, fn func(val int64, valBytes int, pc uint64, pcBytes int)) {
 	if off == 0 {
 		return
 	}
