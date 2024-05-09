@@ -479,9 +479,9 @@ func (f funcData) cuOffset() uint32    { return f.field(8) }
 // It panics if n == 0 or n > 10; for n == 0, call f.entryPC.
 // Most callers should use a named field accessor (just above).
 func (f funcData) field(n uint32) uint32 {
-	if n == 0 || n > 10 {
-		panic("bad funcdata field")
-	}
+	//if n == 0 || n > 10 {
+	//	panic("bad funcdata field")
+	//}
 	// In Go 1.18, the first field of _func changed
 	// from a uintptr entry PC to a uint32 entry offset.
 	sz0 := f.t.ptrsize
