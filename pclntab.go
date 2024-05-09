@@ -315,6 +315,15 @@ func (t *LineTable) go12Funcs() []Func {
 		info := t.funcData(uint32(i))
 		f.LineTable = t
 		f.FrameSize = int(info.deferreturn())
+
+		// modded from shotizam
+		f.funcDataBytes = t.funcdata[t.funcTab().funcOff(i):]
+		f.NumPCData = info.numPCData()
+		f.NumFuncData = info.numFuncData()
+		f.OffPCSP = info.pcsp()
+		f.OffPCFile = info.pcfile()
+		f.OffPCLn = info.pcln()
+
 		syms[i] = Sym{
 			Value:     f.Entry,
 			Type:      'T',
