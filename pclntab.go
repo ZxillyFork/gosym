@@ -15,16 +15,16 @@ import (
 	"sync"
 )
 
-// version of the pclntab
-type version int
+// Version of the pclntab
+type Version int
 
 const (
-	verUnknown version = iota
-	ver11
-	ver12
-	ver116
-	ver118
-	ver120
+	VerUnknown Version = iota
+	Ver11
+	Ver12
+	Ver116
+	Ver118
+	Ver120
 )
 
 // A LineTable is a data structure mapping program counters to line numbers.
@@ -49,7 +49,7 @@ type LineTable struct {
 	mu sync.Mutex
 
 	// Contains the version of the pclntab section.
-	version version
+	version Version
 
 	// Go 1.2/1.16/1.18 state
 	binary      binary.ByteOrder
@@ -67,8 +67,8 @@ type LineTable struct {
 	funcNames   map[uint32]string // cache the function names
 	strings     map[uint32]string // interned substrings of Data, keyed by offset
 	// fileMap varies depending on the version of the object file.
-	// For ver12, it maps the name to the index in the file table.
-	// For ver116, it maps the name to the offset in filetab.
+	// For Ver12, it maps the name to the index in the file table.
+	// For Ver116, it maps the name to the offset in filetab.
 	fileMap map[string]uint32
 }
 
@@ -171,7 +171,7 @@ func NewLineTable(data []byte, text uint64) *LineTable {
 // isGo12 reports whether this is a Go 1.2 (or later) symbol table.
 func (t *LineTable) isGo12() bool {
 	t.parsePclnTab()
-	return t.version >= ver12
+	return t.version >= Ver12
 }
 
 const (
@@ -190,20 +190,20 @@ func (t *LineTable) uintptr(b []byte) uint64 {
 	return t.binary.Uint64(b)
 }
 
-// parsePclnTab parses the pclntab, setting the version.
+// parsePclnTab parses the pclntab, setting the Version.
 func (t *LineTable) parsePclnTab() {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	if t.version != verUnknown {
+	if t.version != VerUnknown {
 		return
 	}
 
-	// Note that during this function, setting the version is the last thing we do.
-	// If we set the version too early, and parsing failed (likely as a panic on
-	// slice lookups), we'd have a mistaken version.
+	// Note that during this function, setting the Version is the last thing we do.
+	// If we set the Version too early, and parsing failed (likely as a panic on
+	// slice lookups), we'd have a mistaken Version.
 	//
-	// Error paths through this code will default the version to 1.1.
-	t.version = ver11
+	// Error paths through this code will default the Version to 1.1.
+	t.version = Ver11
 
 	if !disableRecover {
 		defer func() {
@@ -219,26 +219,26 @@ func (t *LineTable) parsePclnTab() {
 		return
 	}
 
-	var possibleVersion version
+	var possibleVersion Version
 	leMagic := binary.LittleEndian.Uint32(t.Data)
 	beMagic := binary.BigEndian.Uint32(t.Data)
 	switch {
 	case leMagic == go12magic:
-		t.binary, possibleVersion = binary.LittleEndian, ver12
+		t.binary, possibleVersion = binary.LittleEndian, Ver12
 	case beMagic == go12magic:
-		t.binary, possibleVersion = binary.BigEndian, ver12
+		t.binary, possibleVersion = binary.BigEndian, Ver12
 	case leMagic == go116magic:
-		t.binary, possibleVersion = binary.LittleEndian, ver116
+		t.binary, possibleVersion = binary.LittleEndian, Ver116
 	case beMagic == go116magic:
-		t.binary, possibleVersion = binary.BigEndian, ver116
+		t.binary, possibleVersion = binary.BigEndian, Ver116
 	case leMagic == go118magic:
-		t.binary, possibleVersion = binary.LittleEndian, ver118
+		t.binary, possibleVersion = binary.LittleEndian, Ver118
 	case beMagic == go118magic:
-		t.binary, possibleVersion = binary.BigEndian, ver118
+		t.binary, possibleVersion = binary.BigEndian, Ver118
 	case leMagic == go120magic:
-		t.binary, possibleVersion = binary.LittleEndian, ver120
+		t.binary, possibleVersion = binary.LittleEndian, Ver120
 	case beMagic == go120magic:
-		t.binary, possibleVersion = binary.BigEndian, ver120
+		t.binary, possibleVersion = binary.BigEndian, Ver120
 	default:
 		return
 	}
@@ -256,7 +256,7 @@ func (t *LineTable) parsePclnTab() {
 	}
 
 	switch possibleVersion {
-	case ver118, ver120:
+	case Ver118, Ver120:
 		t.nfunctab = uint32(offset(0))
 		t.nfiletab = uint32(offset(1))
 		t.textStart = t.PC // use the start PC instead of reading from the table, which may be unrelocated
@@ -268,7 +268,7 @@ func (t *LineTable) parsePclnTab() {
 		t.functab = data(7)
 		functabsize := (int(t.nfunctab)*2 + 1) * t.functabFieldSize()
 		t.functab = t.functab[:functabsize]
-	case ver116:
+	case Ver116:
 		t.nfunctab = uint32(offset(0))
 		t.nfiletab = uint32(offset(1))
 		t.funcnametab = data(2)
@@ -279,7 +279,7 @@ func (t *LineTable) parsePclnTab() {
 		t.functab = data(6)
 		functabsize := (int(t.nfunctab)*2 + 1) * t.functabFieldSize()
 		t.functab = t.functab[:functabsize]
-	case ver12:
+	case Ver12:
 		t.nfunctab = uint32(t.uintptr(t.Data[8:]))
 		t.funcdata = t.Data
 		t.funcnametab = t.Data
@@ -395,7 +395,7 @@ func (t *LineTable) string(off uint32) string {
 
 // functabFieldSize returns the size in bytes of a single functab field.
 func (t *LineTable) functabFieldSize() int {
-	if t.version >= ver118 {
+	if t.version >= Ver118 {
 		return 4
 	}
 	return int(t.ptrsize)
@@ -421,7 +421,7 @@ func (f funcTab) Count() int {
 // pc returns the PC of the i'th func in f.
 func (f funcTab) pc(i int) uint64 {
 	u := f.uint(f.functab[2*i*f.sz:])
-	if f.version >= ver118 {
+	if f.version >= Ver118 {
 		u += f.textStart
 	}
 	return u
@@ -461,7 +461,7 @@ func (f funcData) IsZero() bool {
 func (f *funcData) entryPC() uint64 {
 	// In Go 1.18, the first field of _func changed
 	// from a uintptr entry PC to a uint32 entry offset.
-	if f.t.version >= ver118 {
+	if f.t.version >= Ver118 {
 		// TODO: support multiple text sections.
 		// See runtime/symtab.go:(*moduledata).textAddr.
 		return uint64(f.t.binary.Uint32(f.data)) + f.t.textStart
@@ -485,7 +485,7 @@ func (f funcData) field(n uint32) uint32 {
 	// In Go 1.18, the first field of _func changed
 	// from a uintptr entry PC to a uint32 entry offset.
 	sz0 := f.t.ptrsize
-	if f.t.version >= ver118 {
+	if f.t.version >= Ver118 {
 		sz0 = 4
 	}
 	off := sz0 + (n-1)*4 // subsequent fields are 4 bytes each
@@ -547,7 +547,7 @@ func (t *LineTable) findFileLine(entry uint64, filetab, linetab uint32, filenum,
 	fileStartPC := filePC
 	for t.step(&fp, &filePC, &fileVal, filePC == entry) {
 		fileIndex := fileVal
-		if t.version == ver116 || t.version == ver118 || t.version == ver120 {
+		if t.version == Ver116 || t.version == Ver118 || t.version == Ver120 {
 			fileIndex = int32(t.binary.Uint32(cutab[fileVal*4:]))
 		}
 		if fileIndex == filenum && fileStartPC < filePC {
@@ -606,7 +606,7 @@ func (t *LineTable) go12PCToFile(pc uint64) (file string) {
 	entry := f.entryPC()
 	filetab := f.pcfile()
 	fno := t.pcvalue(filetab, entry, pc)
-	if t.version == ver12 {
+	if t.version == Ver12 {
 		if fno <= 0 {
 			return ""
 		}
@@ -646,7 +646,7 @@ func (t *LineTable) go12LineToPC(file string, line int) (pc uint64) {
 		entry := f.entryPC()
 		filetab := f.pcfile()
 		linetab := f.pcln()
-		if t.version == ver116 || t.version == ver118 || t.version == ver120 {
+		if t.version == Ver116 || t.version == Ver118 || t.version == Ver120 {
 			if f.cuOffset() == ^uint32(0) {
 				// skip functions without compilation unit (not real function, or linker generated)
 				continue
@@ -671,7 +671,7 @@ func (t *LineTable) initFileMap() {
 	}
 	m := make(map[string]uint32)
 
-	if t.version == ver12 {
+	if t.version == Ver12 {
 		for i := uint32(1); i < t.nfiletab; i++ {
 			s := t.string(t.binary.Uint32(t.filetab[4*i:]))
 			m[s] = i

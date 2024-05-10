@@ -28,7 +28,7 @@ type Sym struct {
 	// If this symbol is a function symbol, the corresponding Func
 	Func *Func
 
-	GoVersion version
+	GoVersion Version
 }
 
 // Static reports whether this symbol is static (not visible outside its file).
@@ -61,12 +61,12 @@ func (s *Sym) PackageName() string {
 	// they do not belong to any package.
 	//
 	// See cmd/compile/internal/base/link.go:ReservedImports variable.
-	if s.GoVersion >= ver120 && (strings.HasPrefix(name, "go:") || strings.HasPrefix(name, "type:")) {
+	if s.GoVersion >= Ver120 && (strings.HasPrefix(name, "go:") || strings.HasPrefix(name, "type:")) {
 		return ""
 	}
 
 	// For go1.18 and below, the prefix are "type." and "go." instead.
-	if s.GoVersion <= ver118 && (strings.HasPrefix(name, "go.") || strings.HasPrefix(name, "type.")) {
+	if s.GoVersion <= Ver118 && (strings.HasPrefix(name, "go.") || strings.HasPrefix(name, "type.")) {
 		return ""
 	}
 

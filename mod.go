@@ -133,10 +133,10 @@ func (f funcData) numFuncData() int {
 }
 
 func (f funcData) nfuncdataFieldNum() uint32 {
-	if f.t.version < ver116 {
+	if f.t.version < Ver116 {
 		return 8
 	}
-	if f.t.version < ver120 {
+	if f.t.version < Ver120 {
 		return 9
 	}
 	return 10
