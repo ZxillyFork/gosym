@@ -330,7 +330,7 @@ func (t *LineTable) go12Funcs() []Func {
 			Name:      t.funcName(info.nameOff()),
 			GoType:    0,
 			Func:      f,
-			goVersion: t.version,
+			GoVersion: t.version,
 		}
 		f.Sym = &syms[i]
 	}
